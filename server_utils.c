@@ -8,20 +8,12 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include "server_utils.h"
+
 #define print_error_and_exit(msg) \
    do {fprintf(stderr, "%s: %s\n", (msg), strerror(errno)); exit(EXIT_FAILURE); } while (0)
 
-extern int sockfd;
-
-void exit_at_ctrl_c(int sig)
-{
-    printf("\nExecution Interrupted, all communications have ended\n");
-
-    if (close(sockfd) < 0)
-        print_error_and_exit("...Could not close server socket\n");
-
-    exit(EXIT_SUCCESS);
-}
+extern client_node *root_node;
 
 int handle_port_nu(int port)
 {
@@ -39,4 +31,60 @@ void print_client_addrport(int clientfd, struct sockaddr_in client_info, socklen
     }
     else
         printf("Client %s:%d connected to the server.\n", inet_ntoa(client_info.sin_addr), ntohs(client_info.sin_port));
+}
+
+client_node *create_node(int clientfd)
+{
+    client_node *node = malloc(sizeof(client_node));
+    if (node == NULL) {
+        fprintf(stderr, "Could not allocate memory space for client\n");
+        return NULL;
+    }
+    node->fd = clientfd;
+    node->next = NULL;
+    return node;
+}
+
+void append_node(client_node *head, client_node *client)
+{
+    client_node *tmp = head;
+    while (tmp->next != NULL)
+        tmp = tmp->next;
+    tmp->next = client;
+}
+
+void add_client(int clientfd)
+{
+    if (root_node == NULL) {
+        root_node = create_node(clientfd);
+    }
+    else {
+        client_node *new_node = create_node(clientfd);
+        append_node(root_node, new_node);
+    }
+}
+
+void delete_list(client_node *head)
+{
+    while (head->next != NULL) {
+        client_node *tmp_node = head->next;
+        head->next = head->next->next;
+        if (close(tmp_node->fd) < 0) {
+            fprintf(stderr, "Could not close client socket: %s\n", strerror(errno));
+        } 
+        free(tmp_node);
+    }
+    if (close(head->fd) < 0) {
+        fprintf(stderr, "Could not close client socket: %s\n", strerror(errno));
+    }
+    free(head);
+}
+
+void print_list(client_node *head)
+{
+    while (head != NULL) {
+        printf("%d - ", head->fd);
+        head = head->next;
+    }
+    printf("\n");
 }

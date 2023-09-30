@@ -11,9 +11,23 @@
 #include "server_utils.h"
 
 int sockfd;
+client_node *root_node = NULL;
 
 #define print_error_and_exit(msg) \
    do {fprintf(stderr, "%s: %s\n", (msg), strerror(errno)); exit(EXIT_FAILURE); } while (0)
+
+void exit_at_ctrl_c(int sig)
+{
+    printf("\nExecution Interrupted, all communications have ended\n");
+
+    if (root_node != NULL)
+        delete_list(root_node);
+
+    if (close(sockfd) < 0)
+        print_error_and_exit("...Could not close server socket");
+
+    exit(EXIT_SUCCESS);
+}
 
 int main(int argc, char *argv[])
 {
@@ -55,6 +69,7 @@ int main(int argc, char *argv[])
     while (1) {
         int clientfd = accept(sockfd, (struct sockaddr *)&client_info, &client_info_len);
         print_client_addrport(clientfd, client_info, &client_info_len);
+        add_client(clientfd);
     }
 
     return EXIT_SUCCESS;
