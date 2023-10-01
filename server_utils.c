@@ -13,12 +13,10 @@
 #define print_error_and_exit(msg) \
    do {fprintf(stderr, "%s: %s\n", (msg), strerror(errno)); exit(EXIT_FAILURE); } while (0)
 
-extern client_node *root_node;
-
 int handle_port_nu(int port)
 {
-    if (port <= 1024 || port > 65535) {
-        fprintf(stderr, "Port number should be in this interval (1025 - 65535)\n");
+    if (port <= MIN_PORT - 1 || port > MAX_PORT) {
+        fprintf(stderr, "Port number should be in this range (%d - %d)\n", (int) MIN_PORT, (int) MAX_PORT);
         exit(EXIT_FAILURE);
     }
     return port;
@@ -45,46 +43,48 @@ client_node *create_node(int clientfd)
     return node;
 }
 
-void append_node(client_node *head, client_node *client)
+void append_node(client_node *root, client_node *client)
 {
-    client_node *tmp = head;
+    client_node *tmp = root;
     while (tmp->next != NULL)
         tmp = tmp->next;
     tmp->next = client;
 }
 
-void add_client(int clientfd)
+void delete_list(client_node *root)
 {
-    if (root_node == NULL) {
-        root_node = create_node(clientfd);
-    }
-    else {
-        client_node *new_node = create_node(clientfd);
-        append_node(root_node, new_node);
-    }
-}
+    while (root->next != NULL) {
+        client_node *tmp_node = root->next;
+        root->next = root->next->next;
 
-void delete_list(client_node *head)
-{
-    while (head->next != NULL) {
-        client_node *tmp_node = head->next;
-        head->next = head->next->next;
-        if (close(tmp_node->fd) < 0) {
+        if (close(tmp_node->fd) < 0)
             fprintf(stderr, "Could not close client socket: %s\n", strerror(errno));
-        } 
+
         free(tmp_node);
     }
-    if (close(head->fd) < 0) {
+    if (close(root->fd) < 0)
         fprintf(stderr, "Could not close client socket: %s\n", strerror(errno));
-    }
-    free(head);
+
+    free(root);
 }
 
-void print_list(client_node *head)
+void handle_client(void *p_client)
 {
-    while (head != NULL) {
-        printf("%d - ", head->fd);
-        head = head->next;
+    client_node *client = (client_node *) p_client;
+
+    char send_buff[BUFFSIZE];
+    char recv_buff[BUFFSIZE];
+    
+    // Get the client's name
+    recv(client->fd, recv_buff, MAX_NAME, 0);
+    if (strlen(recv_buff) < MIN_NAME) {
+        fprintf(stderr, "\033[1;31mYou must input a name (length >= %d)\n", (int) MIN_NAME);
+        exit(EXIT_FAILURE);
     }
-    printf("\n");
+    strncpy(client->name, recv_buff, strlen(recv_buff) - 1);
+    printf("%s joined the communication\n", client->name);
+    while (1) {
+        // recv(client->fd, recv_buff, MAX_NAME, 0);
+        // strncat(recv_buff, recv_buff, strlen(recv_buff) - 1);
+    };
 }

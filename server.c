@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <pthread.h>
 #include <unistd.h>
 
 #include "server_utils.h"
@@ -69,7 +70,16 @@ int main(int argc, char *argv[])
     while (1) {
         int clientfd = accept(sockfd, (struct sockaddr *)&client_info, &client_info_len);
         print_client_addrport(clientfd, client_info, &client_info_len);
-        add_client(clientfd);
+
+        client_node *new_client = create_node(clientfd);
+        if (root_node == NULL)
+            root_node = new_client;
+        else
+            append_node(root_node, new_client);
+
+        pthread_t thread_id;
+        if (pthread_create(&thread_id, NULL, (void *)handle_client, (void *)new_client) != 0)
+            print_error_and_exit("Could not create client threads");
     }
 
     return EXIT_SUCCESS;
