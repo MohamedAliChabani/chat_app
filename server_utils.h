@@ -20,6 +20,7 @@ void print_client_addrport(int clientfd, struct sockaddr_in client_info, socklen
 client_node *create_node(int clientfd);
 void append_node(client_node *root, client_node *new_node);
 void delete_list(client_node *root);
+static void get_client_name(client_node *client);
 void handle_client(void *p_client);
 
 #endif //SERVER_UTILS_H_

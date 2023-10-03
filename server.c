@@ -17,7 +17,7 @@ client_node *root_node = NULL;
 #define print_error_and_exit(msg) \
    do {fprintf(stderr, "\033[1;31m%s: %s\n", (msg), strerror(errno)); exit(EXIT_FAILURE); } while (0)
 
-void exit_at_ctrl_c(int sig)
+static void exit_at_ctrl_c(int sig)
 {
     printf("\nExecution Interrupted, all communications have ended\n");
 

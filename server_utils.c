@@ -68,6 +68,17 @@ void delete_list(client_node *root)
     free(root);
 }
 
+static void get_client_name(client_node *client)
+{
+    // trimming the last character of the client's name it it's a new_line char
+    char *name = client->name;
+    name[strlen(name)-1] = (name[strlen(name)-1] == '\n') ? '\0' : name[strlen(name) - 1];
+    if (strlen(name) <= MIN_NAME || strlen(name) > MAX_NAME) {
+        fprintf(stderr, "\033[1;31mYou must input a valid name (%d < length < %d)\n", (int) MIN_NAME, (int) MAX_NAME);
+        name = NULL;
+    }
+}
+
 void handle_client(void *p_client)
 {
     client_node *client = (client_node *) p_client;
@@ -76,13 +87,8 @@ void handle_client(void *p_client)
     char recv_buff[BUFFSIZE];
     
     // Get the client's name
-    recv(client->fd, recv_buff, MAX_NAME, 0);
-    if (strlen(recv_buff) < MIN_NAME) {
-        fprintf(stderr, "\033[1;31mYou must input a name (length >= %d)\n", (int) MIN_NAME);
-        exit(EXIT_FAILURE);
-    }
-    strncpy(client->name, recv_buff, strlen(recv_buff) - 1);
-    printf("%s joined the communication\n", client->name);
+    recv(client->fd, client->name, MAX_NAME, 0);
+    get_client_name(client);
     while (1) {
         // recv(client->fd, recv_buff, MAX_NAME, 0);
         // strncat(recv_buff, recv_buff, strlen(recv_buff) - 1);
