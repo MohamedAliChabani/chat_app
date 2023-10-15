@@ -35,13 +35,6 @@ int main(int argc, char *argv[])
     // Handle Ctrl-c interruption
     signal(SIGINT, exit_at_ctrl_c);
 
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <port>\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    const int SERVER_PORT = handle_port_nu(strtol(argv[1], NULL, 10));
-
     // Server and client socket information
     struct sockaddr_in server_info = {0};
     server_info.sin_family = AF_INET;

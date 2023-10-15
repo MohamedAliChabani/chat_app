@@ -13,14 +13,6 @@
 #define print_error_and_exit(msg) \
    do {fprintf(stderr, "%s: %s\n", (msg), strerror(errno)); exit(EXIT_FAILURE); } while (0)
 
-int handle_port_nu(int port)
-{
-    if (port <= MIN_PORT - 1 || port > MAX_PORT) {
-        fprintf(stderr, "Port number should be in this range (%d - %d)\n", (int) MIN_PORT, (int) MAX_PORT);
-        exit(EXIT_FAILURE);
-    }
-    return port;
-}
 
 void print_client_addrport(int clientfd, struct sockaddr_in client_info, socklen_t *client_info_len)
 {
@@ -74,8 +66,16 @@ static void get_client_name(client_node *client)
     char *name = client->name;
     name[strlen(name)-1] = (name[strlen(name)-1] == '\n') ? '\0' : name[strlen(name) - 1];
     if (strlen(name) <= MIN_NAME || strlen(name) > MAX_NAME) {
-        fprintf(stderr, "\033[1;31mYou must input a valid name (%d < length < %d)\n", (int) MIN_NAME, (int) MAX_NAME);
+        // fprintf(stderr, "\033[1;31mYou must input a valid name (%d < length < %d)\n", (int) MIN_NAME, (int) MAX_NAME);
+        char err_msg[ERROR_BUFFSIZE];
+        snprintf(err_msg, sizeof(err_msg), "You must input a valid name (%d < length < %d)\n", (int) MIN_NAME, (int) MAX_NAME);
+        send(client->fd, err_msg, strlen(err_msg), 0);
         name = NULL;
+    }
+    else {
+        char send_buff[BUFFSIZE];
+        snprintf(send_buff, sizeof(send_buff), "You were assigned the name: %s\n", client->name);
+        send(client->fd, send_buff, strlen(send_buff), 0);
     }
 }
 
