@@ -10,3 +10,5 @@ extern int sockfd;
 
 void send_client_name();
 void get_name_status();
+void send_handler();
+void recv_handler();

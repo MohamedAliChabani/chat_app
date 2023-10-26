@@ -10,6 +10,8 @@
 
 #include "server_utils.h"
 
+extern client_node* root_node;
+
 #define print_error_and_exit(msg) \
    do {fprintf(stderr, "%s: %s\n", (msg), strerror(errno)); exit(EXIT_FAILURE); } while (0)
 
@@ -79,6 +81,20 @@ static void get_client_name(client_node *client)
     }
 }
 
+void broadcast_message(client_node *client, char *message)
+{
+    message[strlen(message) - 1] = '\0';
+
+    client_node* actual_node = root_node;
+    while (actual_node != NULL) {
+        if (actual_node != client) {
+            send(actual_node->fd, message, strlen(message), 0);
+            printf("msg was sent to client: %d\n", actual_node->fd);
+        }
+        actual_node = actual_node->next;
+    }
+}
+
 void handle_client(void *p_client)
 {
     client_node *client = (client_node *) p_client;
@@ -89,8 +105,12 @@ void handle_client(void *p_client)
     // Get the client's name
     recv(client->fd, client->name, MAX_NAME, 0);
     get_client_name(client);
+    snprintf(send_buff, BUFFSIZE, "%s joined the communication\n", client->name);
+    broadcast_message(client, send_buff);
     while (1) {
-        // recv(client->fd, recv_buff, MAX_NAME, 0);
-        // strncat(recv_buff, recv_buff, strlen(recv_buff) - 1);
+        char tmp[BUFFSIZE];
+        recv(client->fd, tmp, BUFFSIZE, 0);
+        snprintf(recv_buff, BUFFSIZE, "%s:%s", client->name, tmp);
+        broadcast_message(client, recv_buff);
     };
 }

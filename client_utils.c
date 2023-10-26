@@ -28,5 +28,30 @@ void get_name_status()
 {
     char recv_buff[BUFFSIZE];
     recv(sockfd, recv_buff, BUFFSIZE, 0);
-    printf("%s\n", recv_buff);
+    printf("%s", recv_buff);
+}
+
+void send_handler() {
+    while (1) {
+        fflush(stdout);
+        char send_msg[BUFFSIZE] = {};
+        while (fgets(send_msg, BUFFSIZE, stdin) != NULL) {
+            if (strlen(send_msg) == 0)
+                fflush(stdout);
+            else
+                break;
+        }
+        send(sockfd, send_msg, BUFFSIZE, 0);
+    }
+}
+
+void recv_handler()
+{
+    while (1) {
+        fflush(stdout);
+        char recv_buff[BUFFSIZE] = {};
+        recv(sockfd, recv_buff, BUFFSIZE, 0);
+        printf("%s\n", recv_buff);
+        fflush(stdout);
+    }
 }

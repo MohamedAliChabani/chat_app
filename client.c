@@ -21,7 +21,7 @@ static void exit_at_ctrl_c(int sig)
     if (close(sockfd) < 0)
         print_error_and_exit("...Could not close client socket");
 
-    printf("You exited the chatroom\n");
+    printf("\nYou exited the chatroom\n");
     exit(EXIT_SUCCESS);
 }
 
@@ -45,4 +45,16 @@ int main()
 
     send_client_name();
     get_name_status();
+
+    pthread_t send_thread;
+    if (pthread_create(&send_thread, NULL, (void *) send_handler, NULL) != 0)
+        print_error_and_exit("Could not create thread");
+
+    pthread_t recv_thread;
+    if (pthread_create(&recv_thread, NULL, (void *) recv_handler, NULL) != 0)
+        print_error_and_exit("Could not create thread");
+
+    while (1) {};
+
+    return EXIT_SUCCESS;
 }
